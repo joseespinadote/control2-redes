@@ -1,0 +1,105 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage[a4paper, total={6in, 9in}]{geometry}
+\usepackage{array}
+
+\graphicspath{{C:/Users/josee/Documents/mag/redes/control2/imagenes/}}
+
+\begin{document}
+
+\title{Control 2\\CC4303-2, Redes}
+\author{José Espina\\joseguillermoespina@gmail.com}
+\date{}
+\maketitle
+\section{Pregunta y respuesta sobre \textbf{capa de transporte}}
+
+\subsection{Pregunta}
+Estudiar cómo se comportan los algoritmos Stop \& Wait, Go-Back-N y Selective Repeat en un entorno de pérdida 0.2 y delay alto (0.5 segundos de delay, 1 segundo de RTT). Para estudiar cada algoritmo puede usar el simulador del curso o puede hacerlo por su propia cuenta. A partir de lo observado en su estudio proponga un algoritmo y tamaño de ventana óptimos para los parámetros dados. Explique cómo estudió los algoritmos y justifique su respuesta
+\subsection{Respuesta}
+Primero, recordar la definicion de los algoritmos, los cuales difieren en en términos de eficiencia, complejidad, y requerimientos de \textit{buffer} (basado en el capítulo 3.4 de \cite{tanenbaum})
+\begin{description}
+\item[Stop \& Wait] El transmisor envía un \textit{frame} y espera el \textit{acknowledgments} del receptor antes de enviar el siguente
+\item[Go-back-n] Los \textit{frames} subsecuentes a uno dañado se descartan, sin enviar \textit{acknowledgments} de éstos. Éste acercamiento puede desperdicia un alto porcentaje de ancho de banda si la tasa de error es alta
+\item[Selective repeat] Permite al receptor aceptar y almacenar en el \textit{buffer} los \textit{frames} que le siguen a uno dañado o perdido. Transmisor y receptor mantienen una ventana se secuencia de \textit{frames} por enviar y aceptados respectivamente, hasta llegar a un máximo predefinido
+\end{description}
+
+\subsubsection{Experimento}
+
+Se experimentó con los 4 algoritmos utilizando la versión 4 del simulador de Jo Piquer\cite{simulador_piquer} con los siguientes parámetros generales. Se ejecutó cada algoritmo para un envío aproximado de 700 paquetes
+
+En la tabla a continuación se encuentran los parámetros generales para los 4 algoritmos
+
+\begin{table}
+\centering
+\caption{Parámetros generales para experimentar con los 4 algoritmos}
+\begin{tabular}{ |l|l| } 
+ \hline
+Nombre del parámetros & Valor\\ \hline
+\textit{Windows size} & 15 (salvo \textit{Stop \& Wait}: 1)\\
+\textit{End-to-end delay} & 500\\
+\textit{End-to-end delay variance} & 0\\
+\textit{Timeout} & 1500\\
+\textit{Number of packets emited per minute} & 120 (valor máximo)\\
+\textit{Loss probability} & 0.2\\ \hline
+\end{tabular}
+\end{table}
+
+En las siguientes tablas, se presentan los resultados para \textit{Stop \& Wait}, \textit{Go-Back-N}, \textit{Selective Repeat}, y \textit{Selective Repeat} + \textit{CACK} (del inglés. \textit{Cumulative Acknowledgments}). Los valores se aproximaron a 2 decimales
+
+\begin{table}[ht]
+\centering
+\caption{Resultado del experimento para los 4 algoritmos}
+\begin{tabular}[t]{lcccc}
+\hline
+&Stop \& Wait&Go-Back-N&Selective-Repeat&Selective Repeat + CACK\\
+\hline
+Total packets sent&        698  & 700 & 697 & 697 \\
+Total OK&                         315 & 301 & 320 & 338 \\
+Useful BW (packets/s)&    0.21 & 0.25 & 0.29 & 0.30 \\
+Total BW (packets/s)&      0.46 & 0.59 & 0.64 & 0.62 \\
+Current BW (packets/s)&  0.63 & 1.23 & 1.24 & 0.68 \\
+Loss Prob&                       0.2  & 0.22 & 0.28  & 0.2 \\
+\hline
+\end{tabular}
+\end{table}
+\subsubsection{Análisis de los resultados}
+todo
+\subsubsection{Propuesta}
+todo
+\section{Pregunta y respuesta sobre \textbf{capa de red}}
+\subsection{Pregunta}
+El AS Hijacking hace referencia a cuando un sistema (hijacker) originalmente ajeno a la red se posiciona de tal forma que puede ver pasar los mensajes que van de un nodo a otro sin ser identificado. Si los mensajes que ve el hijacker se envían de forma insegura, este podrá ver su contenido permitiéndole, por ejemplo, robar claves de Internet. Utilizando la configuración de nodos y el código necesario para la actividad de la semana 13-14 simule AS hijacking. Para ello debería insertar un nuevo nodo n de tal forma que los mensajes que van desde 8887 a 8881 pasen por n antes de llegar a 8881. Haga que n además imprima todos los mensajes que pasen por él. Note que para hacer que los mensajes de 8887 a 8881 pasen por n, debe insertar a n junto a sus propias tablas de ruta en algún lugar de la red y luego correr el algoritmo de ruteo y esperar a que se estabilice. Explique cómo y porqué su hijacking fue exitoso.
+\subsection{Respuesta}
+En el RFC 7132 ``Modelo de amenaza para enrutamiento seguro de BGP''\cite{rfc7132}, página 9, se describen los ataques en \textit{routers} en BGP externa. Entre ellos: \textit{AS Insertion}, \textit{False (Route) Origination} (1), \textit{Secure Path Downgrade}, \textit{Invalid AS\_PATH Data Insertion}, \textit{Stale Path Announcement}, \textit{Premature Path Announcement Expiration}, \textit{MITM (Man-In-The-Middle) Attack} (2), \textit{Compromised Router Private Key} y \textit{Withdrawal Suppression Attack}.
+
+Lo descrito en la pregunta se podría lograr con los ataques (1) y (2) en conjunto. En (1) un \textit{router} atacante origina una ruta para un prefijo del AS víctima (donde, obviamente, no está autorizado), desviando el tráfico a su propio AS. Esto funcionaría sacando provecho a que los \textit{router} derivan la comunicación primero a rutas donde prefijos declarados son más específicos. En ese momento, el atacante tiene 2 opciones: podría no reenviar la comunicación creando un \textit{blackhole}, denegando el servicio, tal como lo que suceció, por accidente, con el conocido caso de cuando Pakistán censuró al sitio YouTube, generando una caída del servicio en todo el mundo por 2 horas aproximadamente. La segunda opción es que, posterior a algún análisis malicioso o manipulación de datos, el atacante reenvíe la comunicación a la víctima, esperando que no se entere que su tráfico fue desviado y analizado. Esto último sería clasificado como el ataque tipo (2)
+
+Un muy buen ejemplo de esto último se puede apreciar en la presentación \textit{``Stealing The Internet''} realizada en la Defcon 16\cite{defcon16}
+
+Supuestos del script adjunto:
+\begin{enumerate}
+\item Se usa la versión 3 o superior de Pythob
+\item Sólo se usa IPv4
+\item La entrada del script es correcta. Es decir, siempre tiene el formato ``<ip>,<puerto>,<mensaje>''
+\item Se usa el programa NetCat para experimentación
+\item Tanto las rutas como los archivos de tablas de rutas existen y están correctos
+\item El límite del \textit{buffer} de entrada es de 256 caracteres
+\item Se usó protocolo TCP de manera arbitraria
+\item Se usó el paquete \texttt{socketserver} como servidor, y \texttt{socket} para redirigir la comunicación en caso que el mensaje no fuese para el \textit{router}
+\end{enumerate}
+
+%https://eol.uchile.cl/courses/course-v1:eol+DCC-CC4303_v1+2020_1/courseware/992f66028ad14b68aa017f7ed510a15c/444f26e3fb1c4947a9ab85200c6051d4/3?activate_block_id=block-v1%3Aeol%2BDCC-CC4303_v1%2B2020_1%2Btype%40video%2Bblock%40e250826417da4a11b74b3b22bef6e802
+%
+%https://eol.uchile.cl/courses/course-v1:eol+DCC-CC4303_v1+2020_1/courseware/992f66028ad14b68aa017f7ed510a15c/0b1f8426882b4f2999319564ea88a8bb/7?activate_block_id=block-v1%3Aeol%2BDCC-CC4303_v1%2B2020_1%2Btype%40vertical%2Bblock%40fe5288e08105431fb548df3f224916b4
+
+\begin{thebibliography}{9}
+\bibitem{tanenbaum} Tanenbaum, A. S. (2003). Computer networks, fourth edition: Problem solutions. Upper Saddle River, NJ: Prentice Hall PTR.
+\bibitem{simulador_piquer}Simulador de \textit{frames} Johannes Kessler, modificado por José ``Jo'' Piquer. Retrieved July 10, 2020, from https://users.dcc.uchile.cl/~jpiquer/srgbn4.html
+\bibitem{rfc7132} Threat Model for BGP Path Security. (n.d.). Retrieved July 17, 2020, from https://tools.ietf.org/html/rfc7132
+\bibitem{defcon16} Stealing The InternetAn Internet-Scale Man In The Middle Attack Defcon 16. Retrieved July 17, 2020, from https://www.defcon.org/images/defcon-16/dc16-presentations/defcon-16-pilosov-kapela.pdf
+\end{thebibliography}
+\end{document}
