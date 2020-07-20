@@ -6,8 +6,36 @@
 \usepackage[ruled,vlined]{algorithm2e}
 \usepackage[a4paper, total={6in, 9in}]{geometry}
 \usepackage{array}
+\usepackage{float}
+\usepackage{subfig}
+\usepackage{listings}
+\usepackage{xcolor}
 
+\renewcommand{\familydefault}{\sfdefault}
 \graphicspath{{C:/Users/josee/Documents/mag/redes/control2/imagenes/}}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
 
 \begin{document}
 
@@ -15,21 +43,21 @@
 \author{José Espina\\joseguillermoespina@gmail.com}
 \date{}
 \maketitle
-\section{Pregunta y respuesta sobre \textbf{capa de transporte}}
+\section{Capa de transporte}
 
 \subsection{Pregunta}
-Estudiar cómo se comportan los algoritmos Stop \& Wait, Go-Back-N y Selective Repeat en un entorno de pérdida 0.2 y delay alto (0.5 segundos de delay, 1 segundo de RTT). Para estudiar cada algoritmo puede usar el simulador del curso o puede hacerlo por su propia cuenta. A partir de lo observado en su estudio proponga un algoritmo y tamaño de ventana óptimos para los parámetros dados. Explique cómo estudió los algoritmos y justifique su respuesta
+Estudiar cómo se comportan los algoritmos \textit{Stop \& Wait}, \textit{Go-Back-N} y \textit{Selective Repeat} en un entorno de pérdida 0.2 y delay alto (0.5 segundos de delay, 1 segundo de \textit{RTT}). Para estudiar cada algoritmo puede usar el simulador del curso o puede hacerlo por su propia cuenta. A partir de lo observado en su estudio proponga un algoritmo y tamaño de ventana óptimos para los parámetros dados. Explique cómo estudió los algoritmos y justifique su respuesta
 \subsection{Respuesta}
-Primero, recordar la definicion de los algoritmos, los cuales difieren en en términos de eficiencia, complejidad, y requerimientos de \textit{buffer} (basado en el capítulo 3.4 de \cite{tanenbaum})
+\subsubsection{Contexto}
+Se definen los algoritmos de la pregunta, más un cuarto que aparece en el simulador del curso, los cuales difieren en términos de eficiencia, complejidad, y requerimientos de \textit{buffer} (basado en el capítulo 3.4 de \cite{tanenbaum})
 \begin{description}
-\item[Stop \& Wait] El transmisor envía un \textit{frame} y espera el \textit{acknowledgments} del receptor antes de enviar el siguente
-\item[Go-back-n] Los \textit{frames} subsecuentes a uno dañado se descartan, sin enviar \textit{acknowledgments} de éstos. Éste acercamiento puede desperdicia un alto porcentaje de ancho de banda si la tasa de error es alta
-\item[Selective repeat] Permite al receptor aceptar y almacenar en el \textit{buffer} los \textit{frames} que le siguen a uno dañado o perdido. Transmisor y receptor mantienen una ventana se secuencia de \textit{frames} por enviar y aceptados respectivamente, hasta llegar a un máximo predefinido
+\item[Stop \& Wait] El transmisor envía un \textit{frame} y espera el \textit{acknowledgments} del receptor, antes de enviar el siguente. Este algoritmo es muy lento y no saca provecho del ancho de banda disponible
+\item[Go-back-n] Los \textit{frames} subsecuentes a uno dañado se descartan, sin enviar \textit{acknowledgments} de éstos. Éste acercamiento usa todo el ancho de banda disponible, pero los desperdiciará en un alto porcentaje si la tasa de error es alta
+\item[Selective repeat] Permite al receptor aceptar y almacenar los \textit{frames} que le siguen a uno dañado o perdido. Transmisor y receptor acuerdan mantener una ventana de transmisión de ancho fijo, que permitirá enumerar los \textit{frames} por enviar y recibidos respectivamente. La implementación de la ventana requerirá de un \textit{buffer} por parte de ambos
+\item[Selective repeat + CACK (del inglés, Cumulative Acknowledgments)] Es el mismo \textit{Selective repeat} con la ventaja de que el receptor puede enviar un sólo \textit{frame} de tipo \textit{acknowledgment} para avisarle el emisor de todos los \textit{frames} recibidos satisfactoriamente dentro de la ventana de transmisión
 \end{description}
-
 \subsubsection{Experimento}
-
-Se experimentó con los 4 algoritmos utilizando la versión 4 del simulador de Jo Piquer\cite{simulador_piquer} con los siguientes parámetros generales. Se ejecutó cada algoritmo para un envío aproximado de 700 paquetes
+Se experimentó con los 4 algoritmos utilizando la versión 4 del simulador editado por ``Jo'' Piquer\cite{simulador_piquer} con los siguientes parámetros generales. Se ejecutó cada algoritmo hasta un envío aproximado de 700 paquetes
 
 En la tabla a continuación se encuentran los parámetros generales para los 4 algoritmos
 
@@ -48,14 +76,15 @@ Nombre del parámetros & Valor\\ \hline
 \end{tabular}
 \end{table}
 
-En las siguientes tablas, se presentan los resultados para \textit{Stop \& Wait}, \textit{Go-Back-N}, \textit{Selective Repeat}, y \textit{Selective Repeat} + \textit{CACK} (del inglés. \textit{Cumulative Acknowledgments}). Los valores se aproximaron a 2 decimales
+Los parámetros \textit{end-to-end delay} y \textit{loss probability} son inidicados en el enunciado del problema. \textit{Timeout} es de 500 milisegundo sobre el \textit{RTT}, lo que debiese darle tiempo suficiente para recibir el \textit{ACK}, o de descartarlo en caso de no llegar hasta ese momento. Se escogió el máximo valor en el envío de paquetes por minuto, esperando poner a prueba el desempeño de cada algoritmo. El parámetro \textit{end-to-end delay variance} está fuera del alcance en este ejercicio. Finalmente, el tamaño de la ventana \textit{windows size}, fue configurado en 15, de manera arbitraria, salvo para implementar \textit{Stop \& Wait}, donde se debe fijar en 1.
 
+En las siguientes tablas, se presentan los resultados para \textit{Stop \& Wait}, \textit{Go-Back-N}, \textit{Selective Repeat}, y \textit{Selective Repeat} + \textit{CACK}. Los valores se aproximaron a 2 decimales
 \begin{table}[ht]
 \centering
 \caption{Resultado del experimento para los 4 algoritmos}
 \begin{tabular}[t]{lcccc}
 \hline
-&Stop \& Wait&Go-Back-N&Selective-Repeat&Selective Repeat + CACK\\
+&\textit{Stop \& Wait}&\textit{Go-Back-N}&\textit{Selective-Repeat}&\textit{Selective Repeat + CACK}\\
 \hline
 Total packets sent&        698  & 700 & 697 & 697 \\
 Total OK&                         315 & 301 & 320 & 338 \\
@@ -66,40 +95,207 @@ Loss Prob&                       0.2  & 0.22 & 0.28  & 0.2 \\
 \hline
 \end{tabular}
 \end{table}
+
+A continuación, se presentan los gráficos de línea resultantes de cada simulación. NOTA: Las escalas de los ejes no son iguales para los 4 gráficos, por lo que no son comparables
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=6.0in]{stopnwait}
+\caption{\textit{Stop \& Wait}}
+\includegraphics[width=6.0in]{gobackn}
+\caption{\textit{Go-Back-N}}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=6.0in]{select}
+\caption{\textit{Selective-Repeat}}
+\includegraphics[width=6.0in]{selectycack}
+\caption{\textit{Selective Repeat + CACK}}
+\end{figure}
+
 \subsubsection{Análisis de los resultados}
-todo
-\subsubsection{Propuesta}
-todo
-\section{Pregunta y respuesta sobre \textbf{capa de red}}
+Se puede apreciar, que \textit{Selective-Repeat}, y su par con \textit{CACK}, tuvieron los mejores desempeños con 338 y 320 \textit{frames} enviados exitosos respectivamente, y un ancho de banda útil de un 30\% para ambos aproximadamente. Si bien \textit{Selective-Repeat} con \textit{CACK} logra el mismo rendimiento que \textit{Selective-Repeat}, éste consume menor cantidad de ancho de banda ya que necesita sólo 1 \textit{frame ACK} para confirmarle al emisor que todos fueron recibidos exitosamente posterior a un fallo, lo que lo hace más eficiente
+
+Ningún gráfico lo refleja, pero durante el experimento se pudo observar que el gran tamaño de ventana de transmisión con el que se configuró el simulador se desperdició, debido a que nunca se usaron más allá de 4 o 5 \textit{frames} del \textit{buffer}. Ésto se debe a que el \textit{RTT} es bajo dentro dentro del simulador (es, de hecho, el valor más pequeño que es posible configurar). Por la misma razón, se puede ver en los gráficos de línea, que la ventana de congestión se mantiene relativamente baja y estable. Se hubiese sacado más provecho al tamaño de ventana si el \textit{RTT} hubiese sido mayor. Por otro lado, la ventana de congestión hubiese tenido mayores valores en un ambiente con un poco más de pérdida y/o mayor \textit{RTT}
+\subsubsection{Conclusión}
+Para el escenario de la pregunta, el algoritmo con mejor desempeño (mejor ancho de banda útil logrado), y, además, de mayor eficiencia (menor uso de ancho de banda), es \textit{Selective-Repeat} con \textit{CACK}
+\section{Capa de red}
 \subsection{Pregunta}
-El AS Hijacking hace referencia a cuando un sistema (hijacker) originalmente ajeno a la red se posiciona de tal forma que puede ver pasar los mensajes que van de un nodo a otro sin ser identificado. Si los mensajes que ve el hijacker se envían de forma insegura, este podrá ver su contenido permitiéndole, por ejemplo, robar claves de Internet. Utilizando la configuración de nodos y el código necesario para la actividad de la semana 13-14 simule AS hijacking. Para ello debería insertar un nuevo nodo n de tal forma que los mensajes que van desde 8887 a 8881 pasen por n antes de llegar a 8881. Haga que n además imprima todos los mensajes que pasen por él. Note que para hacer que los mensajes de 8887 a 8881 pasen por n, debe insertar a n junto a sus propias tablas de ruta en algún lugar de la red y luego correr el algoritmo de ruteo y esperar a que se estabilice. Explique cómo y porqué su hijacking fue exitoso.
+El \textit{AS Hijacking} hace referencia a cuando un sistema (\textit{hijacker}), originalmente ajeno a la red, se posiciona de tal forma que puede ver pasar los mensajes que van de un nodo a otro sin ser identificado. Si los mensajes que ve el \textit{hijacker} se envían de forma insegura, este podrá ver su contenido permitiéndole, por ejemplo, robar claves de Internet. Utilizando la configuración de nodos y el código necesario para la actividad de la semana 13-14 simule \textit{AS hijacking}. Para ello debería insertar un nuevo nodo n de tal forma que los mensajes que van desde 8887 a 8881 pasen por n antes de llegar a 8881. Haga que n además imprima todos los mensajes que pasen por él. Note que para hacer que los mensajes de 8887 a 8881 pasen por n, debe insertar a n junto a sus propias tablas de ruta en algún lugar de la red y luego correr el algoritmo de ruteo y esperar a que se estabilice. Explique cómo y porqué su \textit{hijacking} fue exitoso.
 \subsection{Respuesta}
+\subsubsection{Contexto}
 En el RFC 7132 ``Modelo de amenaza para enrutamiento seguro de BGP''\cite{rfc7132}, página 9, se describen los ataques en \textit{routers} en BGP externa. Entre ellos: \textit{AS Insertion}, \textit{False (Route) Origination} (1), \textit{Secure Path Downgrade}, \textit{Invalid AS\_PATH Data Insertion}, \textit{Stale Path Announcement}, \textit{Premature Path Announcement Expiration}, \textit{MITM (Man-In-The-Middle) Attack} (2), \textit{Compromised Router Private Key} y \textit{Withdrawal Suppression Attack}.
 
-Lo descrito en la pregunta se podría lograr con los ataques (1) y (2) en conjunto. En (1) un \textit{router} atacante origina una ruta para un prefijo del AS víctima (donde, obviamente, no está autorizado), desviando el tráfico a su propio AS. Esto funcionaría sacando provecho a que los \textit{router} derivan la comunicación primero a rutas donde prefijos declarados son más específicos. En ese momento, el atacante tiene 2 opciones: podría no reenviar la comunicación creando un \textit{blackhole}, denegando el servicio, tal como lo que suceció, por accidente, con el conocido caso de cuando Pakistán censuró al sitio YouTube, generando una caída del servicio en todo el mundo por 2 horas aproximadamente. La segunda opción es que, posterior a algún análisis malicioso o manipulación de datos, el atacante reenvíe la comunicación a la víctima, esperando que no se entere que su tráfico fue desviado y analizado. Esto último sería clasificado como el ataque tipo (2)
+Lo descrito en la pregunta se podría lograr con los ataques (1) y (2) en conjunto. En (1) un \textit{router} atacante origina una ruta para un prefijo del AS víctima (donde, obviamente, no está autorizado), desviando el tráfico a su propio AS. Esto funcionaría sacando provecho a que los \textit{router} derivan la comunicación primero a rutas donde prefijos declarados son más específicos, y engañando, de manera administrativa, con una solicitud a los AS colindantes. En ese momento, el atacante tiene 2 opciones: podría no reenviar la comunicación creando un \textit{blackhole}, denegando el servicio, tal como lo que suceció, por accidente, con el conocido caso de cuando el gobierno de Pakistán censuró, al interior de su país, al sitio YouTube, generando una caída del servicio en todo el mundo por 2 horas aproximadamente. La segunda opción es que, posterior a algún análisis malicioso, manipulación de datos o generación de \textit{spam}, el atacante reenvíe la comunicación a la víctima, esperando que no se entere que su tráfico fue desviado y analizado. Esto último sería clasificado como el ataque tipo (2)
 
-Un muy buen ejemplo de esto último se puede apreciar en la presentación \textit{``Stealing The Internet''} realizada en la Defcon 16\cite{defcon16}
+Un muy buen ejemplo de esto último se puede apreciar en la presentación \textit{``Stealing The Internet''} realizada en la Defcon '16\cite{defcon16} y que inspiró a hacer el siguiente experimento
 
-Supuestos del script adjunto:
+\subsubsection{Experimento}
+
+Se implementó un \textit{script} router\_normal.py para simular el comportamiento de un router AS. Se implementó en Python 3, con el módulo \textsc{socketserver} para conexiones entrantes y \textsc{socket} para redirigir la comunicación en caso que el mensaje no fuese para el \textit{router}
+
+La idea ejecutar un script para cada \textit{router} de la simulación. Al iniciar, se carga la tabla de rutas desde un archivo de texto, en el formato de la actividad de la semana 11-12 de la capa de redes (Red (CIDR), puerto inicial, puerto final, IP para llegar y puerto para llegar). El script 2 parámetros, el puerto en que va a escuchar conexiones entrantes, y la ruta del archivo que contenga la tabla de rutas
+
+Los supuestos dentro de la implentación son:
 \begin{enumerate}
-\item Se usa la versión 3 o superior de Pythob
-\item Sólo se usa IPv4
-\item La entrada del script es correcta. Es decir, siempre tiene el formato ``<ip>,<puerto>,<mensaje>''
+\item Se debe ejecutar el \textit{script} con la versión 3, o superior, de Python
+\item Como IP siempre se usa 127.0.0.1. Sería interesante otros rangos para hacer un experimento más complejo
 \item Se usa el programa NetCat para experimentación
+\item El mensaje de entrada, mediante NetCat, del script es de sintaxis correcta, cumpliendo siempre con el formato ``\textsc{ip}, \textsc{puerto}, \textsc{mensaje}''
 \item Tanto las rutas como los archivos de tablas de rutas existen y están correctos
 \item El límite del \textit{buffer} de entrada es de 256 caracteres
 \item Se usó protocolo TCP de manera arbitraria
-\item Se usó el paquete \texttt{socketserver} como servidor, y \texttt{socket} para redirigir la comunicación en caso que el mensaje no fuese para el \textit{router}
 \end{enumerate}
 
-%https://eol.uchile.cl/courses/course-v1:eol+DCC-CC4303_v1+2020_1/courseware/992f66028ad14b68aa017f7ed510a15c/444f26e3fb1c4947a9ab85200c6051d4/3?activate_block_id=block-v1%3Aeol%2BDCC-CC4303_v1%2B2020_1%2Btype%40video%2Bblock%40e250826417da4a11b74b3b22bef6e802
-%
-%https://eol.uchile.cl/courses/course-v1:eol+DCC-CC4303_v1+2020_1/courseware/992f66028ad14b68aa017f7ed510a15c/0b1f8426882b4f2999319564ea88a8bb/7?activate_block_id=block-v1%3Aeol%2BDCC-CC4303_v1%2B2020_1%2Btype%40vertical%2Bblock%40fe5288e08105431fb548df3f224916b4
+Para el experimento realizado se usaron 3 \textit{routers} normales y un atacante (el \textit{AS hijacker}). Éste último tiene su implementación propia, en el \textit{script} router\_atacante.py. Este \textit{script} es más rígido, en el sentido que abre el puerto 10000 de manera arbitraria cuando se le ejecuta y no tiene archivo de configuración
+
+La siguiente tabla y figuras representan las configuración y visualizan, respectivamente, el ataque que se simulará, donde el \textit{router} víctima es \textbf{R1}, y el atacante, que espiará su comunicación desde R3 sin que la víctima se entere, es \textbf{Atacante}
+
+\begin{table}[H]
+\centering
+\caption{Puertos de los AS de la simulación}
+\begin{tabular}[t]{lcccc}
+\hline
+&Router AS 1 &Router AS 2 (R2)&Router AS 3 (R3)&Router AS atacante\\
+\hline
+Nombre & R1 & R2 & R3 & R Atacante \\
+Puerto & 9000 & 9001 & 9500 & 10000 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Configuración de R1 (archivo rutas\_R1.txt)}
+\begin{tabular}[t]{ccccc}
+\hline
+CIDR&Puerto inicio&Puerto Final&IP de llegada&Puerto de llegada\\
+\hline
+127.0.0.0/24 & 9001 & 9499 & 127.0.0.1 & 9001 \\
+127.0.0.0/24 & 9500 & 9999 & 127.0.0.1 & 9500 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Configuración de R2 (archivo rutas\_R2.txt)}
+\begin{tabular}[t]{ccccc}
+\hline
+CIDR&Puerto inicio&Puerto Final&IP de llegada&Puerto de llegada\\
+\hline
+127.0.0.0/24 & 9000 & 9000 & 127.0.0.1 & 9000 \\
+127.0.0.0/24 & 9500 & 9999 & 127.0.0.1 & 9500 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Configuración de R3 \textbf{antes del ataque} (archivo rutas\_R3.txt)}
+\begin{tabular}[t]{ccccc}
+\hline
+CIDR&Puerto inicio&Puerto Final&IP de llegada&Puerto de llegada\\
+\hline
+127.0.0.0/24 & 9000 & 9000 & 127.0.0.1 & 9000 \\
+127.0.0.0/24 & 9001 & 9499 & 127.0.0.1 & 9001 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Configuración de R3 \textbf{después del ataque} (archivo rutas\_R3\_corrupto.txt)}
+\begin{tabular}[t]{ccccc}
+\hline
+CIDR&Puerto inicio&Puerto Final&IP de llegada&Puerto de llegada\\
+\hline
+127.0.0.0/24 & 9000 & 9000 & 127.0.0.1 & 9000 \\
+127.0.0.0/24 & 9001 & 9499 & 127.0.0.1 & 9001 \\
+$\star$127.0.0.0/25 & 9000 & 9000 & 127.0.0.1 & 10000 \\
+\hline
+\end{tabular}
+\end{table}
+
+En la última tabla, la última configuración ($\star$) es la que permite el ataque, ya que tiene un prefijo más específico que la configuración original que permitía la comunicación directa de R3 a R1 (el de la primera fila). A continuación, una figura que representa la topología de nuestra ``internet'' simulada antes y después del ataque
+
+\begin{figure}[H]%
+    \centering
+    \subfloat[Antes del ataque]{{\includegraphics[width=5cm]{story1} }}%
+    \qquad
+    \subfloat[Posterior del ataque]{{\includegraphics[width=5cm]{story2} }}%
+    \caption{Representación, en grafos, de la topología de la red, antes y después del ataque}%
+    \label{fig:example}%
+\end{figure}
+
+A continuación, se describe el algoritmo de los \textit{routers} normales
+
+\begin{algorithm}[H]
+\SetAlgoLined
+\KwIn{Comunicación entrante: se reciben destinatario(ip y puerto), y mensaje}
+\KwOut{Mensaje recibido o retransmitido}
+ Carga de tabla de rutas desde archivo dado por argumento\;
+ Inicialización de matriz de destinos vacía\;
+ Se inicia el servidor de conexiones entrantes\;
+ \While{escucha nuevas conexiones}{
+   \eIf{¿El mensaje es para mí?}{
+     Se lee e imprime\;
+   } {
+   \eIf{Destinatario ya existe en matriz de rutas}{
+   	  Se reenvía usando Round-Robin\;
+   }{
+   	  Se crea la matriz de rutas\;
+   	  Se reenvía usando la primera ruta\;
+   }
+   }
+ }
+\caption{Funcionaimento de un router normal de la simulación}
+\end{algorithm}
+
+La matriz de rutas se va armando a medida que van llegando los mensajes. Tiene como fin implementar Round-Robin en caso de haber múltples caminos para el mismo destino
+
+Para replicar el experimento, ejecute los siguientes \textit{scripts} en consolas separadas:
+
+\begin{lstlisting}[language=bash, caption=Inicio de routers]
+$ python router_normal.py 9000 rutas_R1.txt
+$ python router_normal.py 9001 rutas_R2.txt
+$ python router_normal.py 9500 rutas_R3.txt
+\end{lstlisting}
+
+Pruebe enviar un mensaje desde cualquier \textit{router} a otro, usando NetCat (nc). Por ejemplo:
+\begin{lstlisting}[language=bash, caption=Ejemplo de transmisión de mensaje a R1 a través de R3]
+nc 127.0.0.1 9500 << EOF
+127.0.0.1,9000,chupete
+EOF
+\end{lstlisting}
+
+Para simular el ataque, detenga R3 e inícielo con el archivo de configuración rutas\_R3\_corrupto.txt
+\begin{lstlisting}[language=bash, caption=Ejemplo de transmisión de mensaje a R1 a través de R3]
+python router_normal.py 9500 rutas_R3_corrupto.txt
+\end{lstlisting}
+
+Levante el R atacante
+\begin{lstlisting}[language=bash, caption=Se levanta el router atacante de R1]
+python router_atacante.py
+\end{lstlisting}
+
+Por último, probar que el ataque funciona, envíe, nuevamente, un mensaje a R1 a través de R3. Se debiese ver el mensaje secuestrado, tanto en la consola del R Atacante, como en R1
+
+\subsubsection{Conclusión}
+En la realidad, esto se pudo haber logrado engañando a los administradores del AS, solicitando una nueva regla de flujo de datos con un prefijo de CIDR más específico que alguna regla actual. Esto se puede lograr con ingeniería social, registrando un dominio expirado, o suplantando la identidad de un correo (esto último es muy poco probable que funcione hoy en día). Un caso real, fue el  denominado \textit{``Incidente LinkTel''}, donde un atacante secuestró a la compañía rusa Link Telecom (AS31733) a través del registro de un dominio DNS recién expirado, y posteriormente, anunciando una serie de prefijos a la compañía Internap (AS12812)\cite{forensic}
+
+Cabe destacar que éste no es la única forma de ataque en BGP externa, tal como se mencionó al principio, hay varios tipos de ataques y, para esta ocasión, se simuló uno basado en la presentación de la Defcon '16, ya citada anteriormente
+
+\section{Anexo}
+
+Se anexan, a continuación, las simulaciones de la pregunta 1
 
 \begin{thebibliography}{9}
 \bibitem{tanenbaum} Tanenbaum, A. S. (2003). Computer networks, fourth edition: Problem solutions. Upper Saddle River, NJ: Prentice Hall PTR.
 \bibitem{simulador_piquer}Simulador de \textit{frames} Johannes Kessler, modificado por José ``Jo'' Piquer. Retrieved July 10, 2020, from https://users.dcc.uchile.cl/~jpiquer/srgbn4.html
 \bibitem{rfc7132} Threat Model for BGP Path Security. (n.d.). Retrieved July 17, 2020, from https://tools.ietf.org/html/rfc7132
-\bibitem{defcon16} Stealing The InternetAn Internet-Scale Man In The Middle Attack Defcon 16. Retrieved July 17, 2020, from https://www.defcon.org/images/defcon-16/dc16-presentations/defcon-16-pilosov-kapela.pdf
+\bibitem{defcon16} Stealing The Internet, An Internet-Scale Man In The Middle Attack Defcon 16. Retrieved July 17, 2020, from https://www.defcon.org/images/defcon-16/dc16-presentations/defcon-16-pilosov-kapela.pdf
+\bibitem{forensic}Schlamp, J., Carle, G., \& Biersack, E. W. (2013). A forensic case study on as hijacking: The attacker's perspective. ACM SIGCOMM Computer Communication Review, 43(2), 5-12.
 \end{thebibliography}
 \end{document}
